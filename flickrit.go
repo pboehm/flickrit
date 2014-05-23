@@ -1,9 +1,10 @@
 package main
 
 import (
-    "encoding/json"
     "github.com/pboehm/flickrit/api"
-    "fmt"
+    "github.com/go-martini/martini"
+    "github.com/martini-contrib/encoder"
+    "net/http"
 )
 
 func main() {
@@ -12,8 +13,25 @@ func main() {
     }
     api.Setup()
 
-    photos, _ := api.GetPhotosForUser("phboehm")
 
-    b, _ := json.Marshal(photos)
-    fmt.Println(string(b))
+    m := martini.Classic()
+    m.Map(api)
+
+    m.Use(func(c martini.Context, w http.ResponseWriter) {
+        c.MapTo(encoder.JsonEncoder{}, (*encoder.Encoder)(nil))
+        w.Header().Set("Content-Type", "application/json; charset=utf-8")
+    })
+
+    m.Get("/photos/:name", func (params martini.Params,
+                                 enc encoder.Encoder) (int, []byte) {
+        name, ok := params["name"]
+
+        if ok {
+            photos, _ := api.GetPhotosForUser(name)
+            return http.StatusOK, encoder.Must(enc.Encode(photos))
+        }
+
+        return 404, []byte("Not Found")
+    })
+    m.Run()
 }

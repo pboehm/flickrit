@@ -16,7 +16,7 @@ type Photo struct {
 
 type UserData struct {
 	Username, NSID string
-	Photos []*Photo
+	Photos []Photo
 }
 
 type API struct {
@@ -30,7 +30,7 @@ func (self *API) Setup() {
     }
 }
 
-func (self *API) GetPhotosForUser(username string) ([]*Photo, error) {
+func (self *API) GetPhotosForUser(username string) ([]Photo, error) {
 	data, ok := self.PhotoCache[username]
 
 	if !ok {
@@ -87,8 +87,8 @@ func (self *API) setNSID(data *UserData) error {
 }
 
 
-func (self *API) getPhotos(data *UserData) []*Photo {
-    photos := []*Photo {}
+func (self *API) getPhotos(data *UserData) []Photo {
+    photos := []Photo {}
 
 	r := &flickr.Request{
 		ApiKey: self.ApiKey,
@@ -115,7 +115,7 @@ func (self *API) getPhotos(data *UserData) []*Photo {
 
 
 	for _, photo := range res.Photos.Photo {
-		photos = append(photos, &Photo{
+		photos = append(photos, Photo{
             Title: photo.Title,
             Datetaken: photo.Datetaken,
             Views: photo.Views,

@@ -7,12 +7,6 @@ import (
 	"time"
 )
 
-const (
-	UserDataTtl          = 20
-	WatchdogTtlDecrement = 5
-	WatchdogInterval     = 5 * time.Second
-)
-
 type Photo struct {
 	Title     string `json:"title"`
 	Datetaken string `json:"created"`
@@ -32,6 +26,10 @@ type API struct {
 	ApiKey     string
 	PhotoCache map[string]*UserData
 	Mutex      sync.RWMutex
+
+	UserDataDefaultTTL   int
+	WatchdogTTLDecrement int
+	WatchdogInterval     int
 }
 
 func (self *API) Setup() {
@@ -64,7 +62,7 @@ func (self *API) GetPhotosForUser(username string) ([]Photo, error) {
 }
 
 func (self *API) getUserData(username string) (*UserData, error) {
-	data := &UserData{Username: username, Ttl: UserDataTtl}
+	data := &UserData{Username: username, Ttl: self.UserDataDefaultTTL}
 
 	err := self.setNSID(data)
 	if err != nil {
@@ -146,13 +144,13 @@ func (self *API) CacheCleanup() {
 		self.Mutex.Lock()
 		for user, data := range self.PhotoCache {
 
-			data.Ttl -= WatchdogTtlDecrement
+			data.Ttl -= self.WatchdogTTLDecrement
 			if data.Ttl <= 0 {
 				delete(self.PhotoCache, user)
 			}
 		}
 		self.Mutex.Unlock()
 
-		time.Sleep(WatchdogInterval)
+		time.Sleep(time.Duration(self.WatchdogInterval) * time.Second)
 	}
 }

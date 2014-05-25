@@ -9,10 +9,12 @@ import (
 
 func main() {
 	api := &api.API{
-		ApiKey: "122cc483be92bd806b696e7d458596ac",
+		ApiKey:               "122cc483be92bd806b696e7d458596ac",
+		UserDataDefaultTTL:   900,
+		WatchdogTTLDecrement: 60,
+		WatchdogInterval:     60,
 	}
 	api.Setup()
-
 	go api.CacheCleanup()
 
 	m := martini.Classic()

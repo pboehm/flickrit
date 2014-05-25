@@ -3,6 +3,14 @@ package api
 import (
 	"encoding/json"
 	flickr "github.com/pboehm/go-flickr"
+	"sync"
+	"time"
+)
+
+const (
+	UserDataTtl          = 20
+	WatchdogTtlDecrement = 5
+	WatchdogInterval     = 5 * time.Second
 )
 
 type Photo struct {
@@ -17,11 +25,13 @@ type Photo struct {
 type UserData struct {
 	Username, NSID string
 	Photos         []Photo
+	Ttl            int
 }
 
 type API struct {
 	ApiKey     string
 	PhotoCache map[string]*UserData
+	Mutex      sync.RWMutex
 }
 
 func (self *API) Setup() {
@@ -31,7 +41,10 @@ func (self *API) Setup() {
 }
 
 func (self *API) GetPhotosForUser(username string) ([]Photo, error) {
+
+	self.Mutex.RLock()
 	data, ok := self.PhotoCache[username]
+	self.Mutex.RUnlock()
 
 	if !ok {
 		newdata, err := self.getUserData(username)
@@ -39,7 +52,10 @@ func (self *API) GetPhotosForUser(username string) ([]Photo, error) {
 			return nil, err
 		}
 
+		self.Mutex.Lock()
 		self.PhotoCache[username] = newdata
+		self.Mutex.Unlock()
+
 		return newdata.Photos, nil
 
 	} else {
@@ -48,7 +64,7 @@ func (self *API) GetPhotosForUser(username string) ([]Photo, error) {
 }
 
 func (self *API) getUserData(username string) (*UserData, error) {
-	data := &UserData{Username: username}
+	data := &UserData{Username: username, Ttl: UserDataTtl}
 
 	err := self.setNSID(data)
 	if err != nil {
@@ -95,7 +111,7 @@ func (self *API) getPhotos(data *UserData) []Photo {
 			"user_id":  data.NSID,
 			"extras":   "date_taken,owner_name,views,url_z,url_o",
 			"format":   "json",
-			"per_page": "50",
+			"per_page": "500",
 		},
 	}
 
@@ -122,4 +138,21 @@ func (self *API) getPhotos(data *UserData) []Photo {
 		})
 	}
 	return photos
+}
+
+func (self *API) CacheCleanup() {
+
+	for {
+		self.Mutex.Lock()
+		for user, data := range self.PhotoCache {
+
+			data.Ttl -= WatchdogTtlDecrement
+			if data.Ttl <= 0 {
+				delete(self.PhotoCache, user)
+			}
+		}
+		self.Mutex.Unlock()
+
+		time.Sleep(WatchdogInterval)
+	}
 }

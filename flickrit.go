@@ -13,6 +13,8 @@ func main() {
 	}
 	api.Setup()
 
+	go api.CacheCleanup()
+
 	m := martini.Classic()
 	m.Map(api)
 

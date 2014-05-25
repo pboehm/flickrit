@@ -7,20 +7,9 @@ import (
 	"time"
 )
 
-type Photo struct {
-	Title        string `json:"title"`
-	Ownername    string `json:"owner"`
-	Datetaken    string `json:"created"`
-	UrlO         string `json:"url_o"`
-	UrlZ         string `json:"url_z"`
-	Views        string `json:"views"`
-	FavCount     string `json:"fav_count"`
-	CommentCount string `json:"comment_count"`
-}
-
 type UserData struct {
 	Username, NSID string
-	Photos         []Photo
+	Photos         []FlickrPhoto
 	Ttl            int
 }
 
@@ -40,7 +29,7 @@ func (self *API) Setup() {
 	}
 }
 
-func (self *API) GetPhotosForUser(username string) ([]Photo, error) {
+func (self *API) GetPhotosForUser(username string) ([]FlickrPhoto, error) {
 
 	self.Mutex.RLock()
 	data, ok := self.PhotoCache[username]
@@ -101,8 +90,7 @@ func (self *API) setNSID(data *UserData) error {
 	return nil
 }
 
-func (self *API) getPhotos(data *UserData) []Photo {
-	photos := []Photo{}
+func (self *API) getPhotos(data *UserData) []FlickrPhoto {
 
 	r := &flickr.Request{
 		ApiKey: self.ApiKey,
@@ -117,29 +105,17 @@ func (self *API) getPhotos(data *UserData) []Photo {
 
 	resp, err := r.Execute()
 	if err != nil {
-		return photos
+		return nil
 	}
 	resp = resp[14 : len(resp)-1]
 
 	var res PhotosResponse
 	err = json.Unmarshal([]byte(resp), &res)
 	if err != nil {
-		return photos
+		return nil
 	}
 
-	for _, photo := range res.Photos.Photo {
-		photos = append(photos, Photo{
-			Title:        photo.Title,
-			Datetaken:    photo.Datetaken,
-			Views:        photo.Views,
-			Ownername:    photo.Ownername,
-			UrlO:         photo.UrlO,
-			UrlZ:         photo.UrlZ,
-			FavCount:     photo.FavCount,
-			CommentCount: photo.CommentCount,
-		})
-	}
-	return photos
+	return res.Photos.Photo
 }
 
 func (self *API) CacheCleanup() {

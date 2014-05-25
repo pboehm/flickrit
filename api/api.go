@@ -8,12 +8,14 @@ import (
 )
 
 type Photo struct {
-	Title     string `json:"title"`
-	Datetaken string `json:"created"`
-	Views     string `json:"views"`
-	Ownername string `json:"owner"`
-	UrlO      string `json:"url_o"`
-	UrlZ      string `json:"url_z"`
+	Title        string `json:"title"`
+	Ownername    string `json:"owner"`
+	Datetaken    string `json:"created"`
+	UrlO         string `json:"url_o"`
+	UrlZ         string `json:"url_z"`
+	Views        string `json:"views"`
+	FavCount     string `json:"fav_count"`
+	CommentCount string `json:"comment_count"`
 }
 
 type UserData struct {
@@ -107,7 +109,7 @@ func (self *API) getPhotos(data *UserData) []Photo {
 		Method: "flickr.people.getPublicPhotos",
 		Args: map[string]string{
 			"user_id":  data.NSID,
-			"extras":   "date_taken,owner_name,views,url_z,url_o",
+			"extras":   "date_taken,owner_name,views,url_z,url_o,count_faves,count_comments",
 			"format":   "json",
 			"per_page": "500",
 		},
@@ -127,12 +129,14 @@ func (self *API) getPhotos(data *UserData) []Photo {
 
 	for _, photo := range res.Photos.Photo {
 		photos = append(photos, Photo{
-			Title:     photo.Title,
-			Datetaken: photo.Datetaken,
-			Views:     photo.Views,
-			Ownername: photo.Ownername,
-			UrlO:      photo.UrlO,
-			UrlZ:      photo.UrlZ,
+			Title:        photo.Title,
+			Datetaken:    photo.Datetaken,
+			Views:        photo.Views,
+			Ownername:    photo.Ownername,
+			UrlO:         photo.UrlO,
+			UrlZ:         photo.UrlZ,
+			FavCount:     photo.FavCount,
+			CommentCount: photo.CommentCount,
 		})
 	}
 	return photos

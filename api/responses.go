@@ -13,12 +13,14 @@ type PhotosResponse struct {
 		Perpage int64  `json:"perpage"`
 		Total   string `json:"total"`
 		Photo   []struct {
-			Title     string `json:"title"`
-			Datetaken string `json:"datetaken"`
-			Views     string `json:"views"`
-			Ownername string `json:"ownername"`
-			UrlO      string `json:"url_o"`
-			UrlZ      string `json:"url_z"`
+			Title        string `json:"title"`
+			Datetaken    string `json:"datetaken"`
+			Views        string `json:"views"`
+			Ownername    string `json:"ownername"`
+			UrlO         string `json:"url_o"`
+			UrlZ         string `json:"url_z"`
+			FavCount     string `json:"count_faves"`
+			CommentCount string `json:"count_comments"`
 		} `json:"photo"`
 	} `json:"photos"`
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-martini/martini"
+	"github.com/martini-contrib/cors"
 	"github.com/martini-contrib/encoder"
 	"github.com/pboehm/flickrit/api"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 func main() {
 	api := &api.API{
 		ApiKey:               "122cc483be92bd806b696e7d458596ac",
-		UserDataDefaultTTL:   900,
+		UserDataDefaultTTL:   1800,
 		WatchdogTTLDecrement: 60,
 		WatchdogInterval:     60,
 	}
@@ -19,6 +20,11 @@ func main() {
 
 	m := martini.Classic()
 	m.Map(api)
+
+	m.Use(cors.Allow(&cors.Options{
+		AllowAllOrigins:  true,
+		AllowCredentials: true,
+	}))
 
 	m.Use(func(c martini.Context, w http.ResponseWriter) {
 		c.MapTo(encoder.JsonEncoder{}, (*encoder.Encoder)(nil))

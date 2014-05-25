@@ -6,28 +6,28 @@ import (
 )
 
 type Photo struct {
-    Title     string  `json:"title"`
-    Datetaken string  `json:"created"`
-    Views     string  `json:"views"`
-    Ownername string  `json:"owner"`
-    UrlO      string  `json:"url_o"`
-    UrlZ      string  `json:"url_z"`
+	Title     string `json:"title"`
+	Datetaken string `json:"created"`
+	Views     string `json:"views"`
+	Ownername string `json:"owner"`
+	UrlO      string `json:"url_o"`
+	UrlZ      string `json:"url_z"`
 }
 
 type UserData struct {
 	Username, NSID string
-	Photos []Photo
+	Photos         []Photo
 }
 
 type API struct {
-    ApiKey string
-    PhotoCache map[string]*UserData
+	ApiKey     string
+	PhotoCache map[string]*UserData
 }
 
 func (self *API) Setup() {
-    if self.PhotoCache == nil {
-        self.PhotoCache = map[string]*UserData {}
-    }
+	if self.PhotoCache == nil {
+		self.PhotoCache = map[string]*UserData{}
+	}
 }
 
 func (self *API) GetPhotosForUser(username string) ([]Photo, error) {
@@ -46,7 +46,6 @@ func (self *API) GetPhotosForUser(username string) ([]Photo, error) {
 		return data.Photos, nil
 	}
 }
-
 
 func (self *API) getUserData(username string) (*UserData, error) {
 	data := &UserData{Username: username}
@@ -86,9 +85,8 @@ func (self *API) setNSID(data *UserData) error {
 	return nil
 }
 
-
 func (self *API) getPhotos(data *UserData) []Photo {
-    photos := []Photo {}
+	photos := []Photo{}
 
 	r := &flickr.Request{
 		ApiKey: self.ApiKey,
@@ -110,22 +108,18 @@ func (self *API) getPhotos(data *UserData) []Photo {
 	var res PhotosResponse
 	err = json.Unmarshal([]byte(resp), &res)
 	if err != nil {
-	    return photos
+		return photos
 	}
-
 
 	for _, photo := range res.Photos.Photo {
 		photos = append(photos, Photo{
-            Title: photo.Title,
-            Datetaken: photo.Datetaken,
-            Views: photo.Views,
-            Ownername: photo.Ownername,
-            UrlO: photo.UrlO,
-            UrlZ: photo.UrlZ,
+			Title:     photo.Title,
+			Datetaken: photo.Datetaken,
+			Views:     photo.Views,
+			Ownername: photo.Ownername,
+			UrlO:      photo.UrlO,
+			UrlZ:      photo.UrlZ,
 		})
 	}
 	return photos
 }
-
-
-

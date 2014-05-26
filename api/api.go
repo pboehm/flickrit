@@ -115,6 +115,10 @@ func (self *API) getPhotos(data *UserData) []FlickrPhoto {
 		return nil
 	}
 
+	for i := 0; i < len(res.Photos.Photo); i++ {
+		res.Photos.Photo[i].GenerateExtraMembers()
+	}
+
 	return res.Photos.Photo
 }
 

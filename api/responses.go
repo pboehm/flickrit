@@ -1,5 +1,9 @@
 package api
 
+import (
+	"fmt"
+)
+
 type NSIDResponse struct {
 	User struct {
 		Nsid string `json:"nsid"`
@@ -11,6 +15,7 @@ type FlickrPhoto struct {
 	Title        string `json:"title"`
 	Datetaken    string `json:"datetaken"`
 	Views        string `json:"views"`
+	Owner        string `json:"owner"`
 	Ownername    string `json:"ownername"`
 	UrlO         string `json:"url_o"`
 	HeightO      string `json:"height_o"`
@@ -20,6 +25,12 @@ type FlickrPhoto struct {
 	WidthZ       string `json:"width_z"`
 	FavCount     string `json:"count_faves"`
 	CommentCount string `json:"count_comments"`
+	PhotoUrl     string `json:"photo_url"`
+}
+
+func (self *FlickrPhoto) GenerateExtraMembers() {
+	self.PhotoUrl = fmt.Sprintf("http://www.flickr.com/photos/%s/%s",
+		self.Owner, self.Id)
 }
 
 type PhotosResponse struct {

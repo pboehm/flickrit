@@ -10,17 +10,13 @@ import (
 type UserData struct {
 	Username, NSID string
 	Photos         []FlickrPhoto
-	Ttl            int
 }
 
 type API struct {
-	ApiKey     string
-	PhotoCache map[string]*UserData
-	Mutex      sync.RWMutex
-
-	UserDataDefaultTTL   int
-	WatchdogTTLDecrement int
-	WatchdogInterval     int
+	ApiKey                   string
+	PhotoCache               map[string]*UserData
+	Mutex                    sync.RWMutex
+	DataCacheRenewalInterval int
 }
 
 func (self *API) Setup() {
@@ -41,9 +37,11 @@ func (self *API) GetPhotosForUser(username string) ([]FlickrPhoto, error) {
 			return nil, err
 		}
 
-		self.Mutex.Lock()
-		self.PhotoCache[username] = newdata
-		self.Mutex.Unlock()
+		if len(newdata.Photos) > 0 {
+			self.Mutex.Lock()
+			self.PhotoCache[username] = newdata
+			self.Mutex.Unlock()
+		}
 
 		return newdata.Photos, nil
 
@@ -53,7 +51,7 @@ func (self *API) GetPhotosForUser(username string) ([]FlickrPhoto, error) {
 }
 
 func (self *API) getUserData(username string) (*UserData, error) {
-	data := &UserData{Username: username, Ttl: self.UserDataDefaultTTL}
+	data := &UserData{Username: username}
 
 	err := self.setNSID(data)
 	if err != nil {
@@ -122,19 +120,39 @@ func (self *API) getPhotos(data *UserData) []FlickrPhoto {
 	return res.Photos.Photo
 }
 
-func (self *API) CacheCleanup() {
+func (self *API) CyclicCacheRenewal() {
+	newdata_chan := make(chan *UserData)
 
-	for {
-		self.Mutex.Lock()
-		for user, data := range self.PhotoCache {
+	go func(newdata_chan chan *UserData) {
+		for {
+			newdata := <-newdata_chan
+			user := newdata.Username
 
-			data.Ttl -= self.WatchdogTTLDecrement
-			if data.Ttl <= 0 {
-				delete(self.PhotoCache, user)
+			olddata, found := self.PhotoCache[user]
+			if !found {
+				continue
+			}
+
+			if len(newdata.Photos) != len(olddata.Photos) {
+				self.Mutex.Lock()
+				self.PhotoCache[user] = newdata
+				self.Mutex.Unlock()
 			}
 		}
-		self.Mutex.Unlock()
+	}(newdata_chan)
 
-		time.Sleep(time.Duration(self.WatchdogInterval) * time.Second)
+	for {
+		for user, _ := range self.PhotoCache {
+			go func(user string, newdata_chan chan *UserData) {
+				newdata, err := self.getUserData(user)
+				if err != nil {
+					return
+				}
+
+				newdata_chan <- newdata
+			}(user, newdata_chan)
+		}
+
+		time.Sleep(time.Duration(self.DataCacheRenewalInterval) * time.Minute)
 	}
 }

@@ -10,13 +10,11 @@ import (
 
 func main() {
 	api := &api.API{
-		ApiKey:               "122cc483be92bd806b696e7d458596ac",
-		UserDataDefaultTTL:   1800,
-		WatchdogTTLDecrement: 60,
-		WatchdogInterval:     60,
+		ApiKey: "122cc483be92bd806b696e7d458596ac",
+		DataCacheRenewalInterval: 15,
 	}
 	api.Setup()
-	go api.CacheCleanup()
+	go api.CyclicCacheRenewal()
 
 	m := martini.Classic()
 	m.Map(api)

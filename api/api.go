@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	flickr "github.com/pboehm/go-flickr"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -133,7 +134,7 @@ func (self *API) CyclicCacheRenewal() {
 				continue
 			}
 
-			if len(newdata.Photos) != len(olddata.Photos) {
+			if !reflect.DeepEqual(newdata.Photos, olddata.Photos) {
 				self.Mutex.Lock()
 				self.PhotoCache[user] = newdata
 				self.Mutex.Unlock()

@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	flickr "github.com/pboehm/go-flickr"
+	flickr "github.com/mncaudill/go-flickr"
 	"reflect"
 	"sync"
 	"time"
